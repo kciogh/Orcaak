@@ -1,0 +1,76 @@
+--CREATE VIEW SB_RequestDate AS 
+Select * FROM SB_RequestDate
+SELECT 
+    o.Orderid, 
+    q.Value, 
+    GETDATE() AS Refresh,
+    CASE
+        WHEN q.Value LIKE 'Monday, %' THEN 'Monday'
+        WHEN q.Value LIKE 'Tuesday, %' THEN 'Tuesday'
+        WHEN q.Value LIKE 'Wednesday, %' THEN 'Wednesday'
+        WHEN q.Value LIKE 'Thursday, %' THEN 'Thursday'
+        WHEN q.Value LIKE 'Friday, %' THEN 'Friday'
+        WHEN q.Value LIKE 'Saturday, %' THEN 'Saturday'
+        WHEN q.Value LIKE 'Sunday, %' THEN 'Sunday'
+        ELSE ''
+    END AS DayOfWeek,
+    CASE
+        WHEN q.Value LIKE '%, January %' THEN 1
+        WHEN q.Value LIKE '%, February %' THEN 2
+        WHEN q.Value LIKE '%, March %' THEN 3
+        WHEN q.Value LIKE '%, April %' THEN 4
+        WHEN q.Value LIKE '%, May %' THEN 5
+        WHEN q.Value LIKE '%, June %' THEN 6
+        WHEN q.Value LIKE '%, July %' THEN 7
+        WHEN q.Value LIKE '%, August %' THEN 8
+        WHEN q.Value LIKE '%, September %' THEN 9
+        WHEN q.Value LIKE '%, October %' THEN 10
+        WHEN q.Value LIKE '%, November %' THEN 11
+        WHEN q.Value LIKE '%, December %' THEN 12
+        ELSE 1
+    END AS MonthNumber,
+    CASE
+        WHEN ISNUMERIC(LEFT(REPLACE(RIGHT(q.Value, 8), ',', ''), 2)) = 1 THEN LEFT(REPLACE(RIGHT(q.Value, 8), ',', ''), 2)
+        ELSE 1
+    END AS Day,
+    CASE
+        WHEN ISNUMERIC(RIGHT(q.Value, 4)) = 1 THEN RIGHT(q.Value, 4)
+        ELSE 2022
+    END AS Year,
+    -- Construct RequestDate from extracted Year, Month, and Day
+    CASE 
+        WHEN ISNUMERIC(RIGHT(q.Value, 4)) = 1 
+             AND ISNUMERIC(LEFT(REPLACE(RIGHT(q.Value, 8), ',', ''), 2)) = 1 
+             AND q.Value LIKE '%, %' 
+        THEN DATEFROMPARTS(
+            CAST(RIGHT(q.Value, 4) AS INT), 
+            CASE
+                WHEN q.Value LIKE '%, January %' THEN 1
+                WHEN q.Value LIKE '%, February %' THEN 2
+                WHEN q.Value LIKE '%, March %' THEN 3
+                WHEN q.Value LIKE '%, April %' THEN 4
+                WHEN q.Value LIKE '%, May %' THEN 5
+                WHEN q.Value LIKE '%, June %' THEN 6
+                WHEN q.Value LIKE '%, July %' THEN 7
+                WHEN q.Value LIKE '%, August %' THEN 8
+                WHEN q.Value LIKE '%, September %' THEN 9
+                WHEN q.Value LIKE '%, October %' THEN 10
+                WHEN q.Value LIKE '%, November %' THEN 11
+                WHEN q.Value LIKE '%, December %' THEN 12
+                ELSE 1
+            END,
+            CAST(LEFT(REPLACE(RIGHT(q.Value, 8), ',', ''), 2) AS INT)
+        )
+        ELSE NULL
+    END AS RequestDate
+FROM 
+    ODOrder o
+
+LEFT JOIN 
+    ODOrderQA q 
+    ON q.OrderID = o.OrderID
+    AND q.Label = 'Requested Delivery Date'
+		WHERE 1=1
+		AND Value NOT LIKE 'Friday __%'
+		AND Value IS NOT NULL
+
