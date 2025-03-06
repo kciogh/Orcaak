@@ -1,18 +1,19 @@
---Create View SB_Folders AS 
-Select Distinct 
-Case
-      WHEN o.FolderID = '169922' THEN '1-New' 
-      WHEN o.FolderID = '169957' THEN '2-Next Delivery Day' 
-	  WHEN o.FolderID = '169958' THEN '3-Future'
-	  WHEN o.FolderID = '262271' THEN '4-Subscription'
-      WHEN o.FolderID = '169924' THEN '5-Closed' 
-      WHEN o.FolderID = '169925' THEN '6-Canceled' 
-	  WHEN o.FolderID = '175092' THEN '7-Merged'
-	  WHEN o.FOlderID = '169923' THEN '8-Prepared'
-	  WHEN o.FOLDERID = '279142' THEN '9-Pre-Order'
-      ELSE 'Not Defined' 
-END AS 'Status',
- FolderID, count(Orderid) AS Orders
- 
- FROM ODOrder o
- GROUP BY FolderID
+CREATE VIEW SB_Folders AS 
+WITH FolderNames AS (
+    SELECT '169922' AS FolderID, '1-New' AS Status
+    UNION ALL SELECT '169957', '2-Next Delivery Day'
+    UNION ALL SELECT '169958', '3-Future'
+    UNION ALL SELECT '262271', '4-Subscription'
+    UNION ALL SELECT '169924', '5-Closed'
+    UNION ALL SELECT '169925', '6-Canceled'
+    UNION ALL SELECT '175092', '7-Merged'
+    UNION ALL SELECT '169923', '8-Prepared'
+    UNION ALL SELECT '279142', '9-Pre-Order'
+)
+SELECT 
+    fn.Status,
+    fn.FolderID,
+    COALESCE(COUNT(o.OrderID), 0) AS Orders
+FROM FolderNames fn
+LEFT JOIN ODOrder o ON fn.FolderID = o.FolderID
+GROUP BY fn.FolderID, fn.Status;
